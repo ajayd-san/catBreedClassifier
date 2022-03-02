@@ -1,4 +1,3 @@
-from distutils.command.upload import upload
 import streamlit as st
 from predictor import predict
 
