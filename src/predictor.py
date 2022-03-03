@@ -1,11 +1,13 @@
 import joblib
 import torchvision
 import torch 
-from skimage import io
+from skimage import io  
 from torch import nn
 from torch.nn import functional as F
 import albumentations as A
 import pandas as pd
+import streamlit as st
+
 
 class ModifiedPretrained(nn.Module):
     def __init__(self, pretrained_model):
@@ -28,16 +30,21 @@ class ModifiedPretrained(nn.Module):
         logits = self.modifiedModel(input)
         return logits
 
-densenet = torchvision.models.densenet121() 
-model = ModifiedPretrained(densenet)
-model.load_state_dict(torch.load('saved_models/iniModel.pth', map_location='cpu'))
-label_encoder = joblib.load('saved_models/labelEncoder.joblib')
-def predict(img):
+@st.cache
+def setup():
+    densenet = torchvision.models.densenet121() 
+    model = ModifiedPretrained(densenet)
+    model.load_state_dict(torch.load('saved_models/iniModel.pth', map_location='cpu'))
+    label_encoder = joblib.load('saved_models/labelEncoder.joblib')
 
+    return model, label_encoder
+
+
+def predict(img):
     transform = A.Compose([
         A.Resize(224, 224)
     ])
-
+    model, label_encoder = setup()
     img = io.imread(img)
     img = transform(image = img)['image']
     img = torch.tensor(img, dtype = torch.float)
